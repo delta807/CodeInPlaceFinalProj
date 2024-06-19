@@ -2,186 +2,114 @@
 
 def main():
     friends_list = list_of_users()
-    prompt = """
-Record new transaction?
-(y) or (n)
-"""
-# start of calculator sequence
+    prompt = "Record new transaction?\n(y) or (n)\n"
+
+    # start of calculator sequence
     while True:
-        add_new_transc = str(input(prompt))
-        if add_new_transc == 'n':
+        add_new_transaction = str(input(prompt)).strip().lower()
+        if add_new_transaction == 'n':
             continue # goes back to beginning of loop and waits for new input
+        elif add_new_transaction == 'y':
+            print(friends_list)
+            process_transaction(friends_list)
 
-        elif add_new_transc == 'y':
-            show_registered_usr(friends_list)
+def process_transaction(friends_list):
+    # gets bill amt
+    expense = get_valid_expense()
+    # gets name of payor
+    payor = get_valid_payor(friends_list)
+    # exp_dict containing amt owed
+    expense_exp_dict = split_expense(expense, payor, friends_list)
+    clear_terminal()
+    print("Expenses:", expense_exp_dict)
 
-            # gets bill amt
-            expense = get_valid_expense()
+def split_expense(expense, payor, friends_list):
+    # contains info on who pays who
+    # key: A owes B, value: amount to pay B
+    exp_dict = {}
 
-            # gets name of payor
-            payor = get_valid_payor(friends_list)
+    # ask users how they want to split the bill
+    prompt1 = "How do you want to split: (e)qually or (d)ifferently\n"
+    split_type = get_valid_type(prompt1)
 
-            # contains info on who pays who
-            # key: A owes B
-            # value: amount to pay B
-            exp_dict = {}
+    # split bill equally
+    if split_type == 'e':
+        amt_per_pax = round(expense / len(friends_list), 2) # divide expense by num of users
+        # store owed amt in exp_dict
+        for user in friends_list:
+            if user != payor:
+                exp_dict[f"{user} owes {payor}"] = amt_per_pax # fstring allows optimised formatting such as this, reducing the need for ',' and '+'
 
-            # ask how users want to split the bill
-            prompt1 = "How do you want to split: (e)qually or (d)ifferently\n"
-            how_to_split = get_valid_type(prompt1)
-
-            # split bill equally
-            if how_to_split == 'e':
-                amt_per_pax = expense / len(friends_list) # divide expense by num of users
-                rounded_amt = round(amt_per_pax, 2) # round amt to 2 d.p.
-                # store owed amt in dict
-                for user in friends_list:
-                    if user != payor:
-                        key = str(user) + ' owes ' + str(payor)
-                        exp_dict[key] = rounded_amt
-
-            # split by differing proportions
-            elif how_to_split == 'd':
-                for user in friends_list:
-                    if user != payor:
-                        print("Amount", user, "owes", payor +": ")
-                        amt_owed = get_valid_split(expense) # gets specific amt owed
-                        key = str(user) + ' owes ' + str(payor)
-                        exp_dict[key] = amt_owed
-
-            clear_terminal()
-            print(exp_dict)
-
+    # split by differing proportions
+    elif split_type == 'd':
+        remaining_expense = expense # so that amt_owed won't be > remaining exp
+        for user in friends_list:
+            if user != payor:
+                print(f"Amount {user} owes {payor}:")
+                amt_owed = get_valid_split(remaining_expense) # gets specific amt owed
+                exp_dict[f"{user} owes {payor}"] = amt_owed
+                remaining_expense -= amt_owed
+    return exp_dict
+                
 def list_of_users():
     # get list of friends
     user_list = []
-
-    num_of_user = get_valid_int()
-    for i in range(num_of_user): 
-        user = input("Register a person: ")
-        user_list.append(user)
-
+    print("Enter names of friends (type 'done' when finished): ")
+    while True:
+        name = input("Name: ").strip()
+        if name.lower() == 'done':
+            break
+        else:
+            user_list.append(name)
+    clear_terminal()
+    print("Friend list: ", user_list)
     return user_list
 
 def get_valid_expense():
     while True:
         try:
-            expense = float(input("Enter expense amt: "))
-
+            expense = float(input("Enter bill amount: "))
             #conditional checks
-            if expense <= 0:
-                print("Amount cannot less than zero. Try again..")
+            if expense > 0:
+                return expense
             else:
-                break
-
+                print("Amount must be more than zero. Try again..")
         except ValueError:
-            print("Not a valid float. Try again..")
-    
-    return expense
-
-def get_valid_int():
-    while True:
-        try:
-            num = int(input('How many people to split with: '))
-
-            #conditional checks
-            if num <= 0:
-                print("Not more than zero. Try again..")
-
-            else:
-                break
-
-        except ValueError:
-            print("Not a whole number. Try again..")
-    
-    return num
+            print("Invalid amount. Please enter a number.")
 
 def get_valid_payor(friends_list):
     # ensure that payor name exists in list of frens
     while True:
-        payor = str(input("Enter who paid: "))
+        payor = input("Enter who paid: ")
         if payor in friends_list: 
-            break
+            return payor
         else:
-            print("Invalid user. Try again..")
+            print("Invalid user. Please choose from registered users.")
 
-    return payor
+def get_valid_type(prompt):
+    valid_list = ['e', 'd']
+    while True:
+        type = input(prompt).strip().lower()
+        if type in valid_list:
+            return type
+        else:
+            print("Invalid response. Try again..")
+
+def get_valid_split(expense):
+    while True:
+        try:
+            amount = float(input())
+            if 0 <= amount <= expense:
+                return amount
+            else:
+                print("Amount out of range. Please enter a valid amount.")
+        except ValueError:
+            print("Invalid response. Please enter a number")
 
 def clear_terminal():
     # creates 20 newline at terminal
     for i in range(20):
       print('\n')
-
-def show_registered_usr(friends_list):
-    # clears terminal and prints list of frens
-    clear_terminal()
-    print(friends_list)
-
-def how_to_split(expense, payor, friends_list):
-    # contains info on who pays who
-    # key: A owes B
-    # value: amount to pay B
-    exp_dict = {}
-
-    # ask how users want to split the bill
-    prompt1 = "How do you want to split: (e)qually or (d)ifferently\n"
-    how_to_split = get_valid_type(prompt1)
-
-    # split bill equally
-    if how_to_split == 'e':
-        amt_per_pax = expense / len(friends_list) # divide expense by num of users
-        rounded_amt = round(amt_per_pax, 2) # round amt to 2 d.p.
-        # store owed amt in dict
-        for user in friends_list:
-            if user != payor:
-                key = str(user) + ' owes ' + str(payor)
-                exp_dict[key] = rounded_amt
-
-    # split by differing proportions
-    elif how_to_split == 'd':
-        for user in friends_list:
-            if user != payor:
-                print("Amount", user, "owes", payor +": ")
-                amt_owed = get_valid_split(expense) # gets specific amt owed
-                key = str(user) + ' owes ' + str(payor)
-                exp_dict[key] = amt_owed
-
-def get_valid_type(prompt):
-    valid_list = ['e', 'd']
-    inval_response = "Invalid response. Try again.."
-
-    while True:
-        try:
-            type = str(input(prompt))
-
-            if type not in valid_list:
-                print(inval_response)
-            else:
-                break
-
-        except ValueError:
-            print(inval_response)
-
-    return type
-
-def get_valid_split(expense):
-    inval_response = "Invalid response. Try again.."
-    out_of_range = 'Amt out of range. Try again..'
-
-    while True:
-        try:
-            amount = float(input())
-
-            if amount < 0 or amount > expense:
-                print(out_of_range)
-            else:
-                break
-
-        except ValueError:
-            print(inval_response)
-
-    return amount
-
 
 if __name__ == '__main__':
     main()
