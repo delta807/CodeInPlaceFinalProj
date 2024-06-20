@@ -1,5 +1,35 @@
 # A program that calculates the expenses for an overseas trip with friends.
 
+class Transaction:
+    def __init__(self, description, expense, payor, splitAmt):
+        self.description = description
+        self.expense = expense
+        self.payor = payor
+        self.splitAmt = splitAmt
+
+    def __repr__(self): 
+        return f"Transaction('{self.description}', {self.expense}, '{self.payor}', {self.splitAmt})" 
+    
+    def __str__(self): 
+        return f"Description: {self.description}\nExpense: {self.expense}\nPayor: {self.payor}"
+    
+    @property 
+    def fulldetails(self):
+        return f"Description: {self.description}\nExpense: {self.expense}\nPayor: {self.payor}\n Split: {self.splitAmt}"
+    
+    @fulldetails.setter
+    def fulldetails(self, friends_list):
+        pass
+
+    @fulldetails.deleter
+    def fulldetails(self):
+        print(f"Transaction - {self.description} removed!")
+        self.description = None
+        self.expense = None
+        self.payor = None
+        self.splitAmt = None
+    
+
 def main():
     friends_list = list_of_users()
     prompt = "Record new transaction?\n(y) or (n)\n"
@@ -14,14 +44,18 @@ def main():
             process_transaction(friends_list)
 
 def process_transaction(friends_list):
+    bill_description = input("Enter a description for the transaction: ").split()
     # gets bill amt
     expense = get_valid_expense()
     # gets name of payor
     payor = get_valid_payor(friends_list)
     # exp_dict containing amt owed
-    expense_exp_dict = split_expense(expense, payor, friends_list)
+    expense_dict = split_expense(expense, payor, friends_list)
+
+    transaction = Transaction(bill_description, expense, payor, expense_dict)
+
     clear_terminal()
-    print("Expenses:", expense_exp_dict)
+    print("Transaction recorded successfully", transaction.fulldetails)
 
 def split_expense(expense, payor, friends_list):
     # contains info on who pays who
